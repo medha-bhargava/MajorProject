@@ -1,0 +1,14 @@
+sequenceDiagram
+  participant User as Warehouse Manager
+  participant GW as API Gateway
+  participant SHIP as Shipment Service
+  participant MQ as RabbitMQ
+  participant ANA as Analytics Service
+  participant NOTIF as Notification Service
+  User->>GW: POST /api/shipments/{id}/delivered
+  GW->>SHIP: Forward delivery update
+  SHIP->>SHIP: Mark DELIVERED
+  SHIP->>MQ: Publish shipment.delivered
+  MQ->>ANA: Persist delivery event
+  MQ->>NOTIF: Store delivery notification
+

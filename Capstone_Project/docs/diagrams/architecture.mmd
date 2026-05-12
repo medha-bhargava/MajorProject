@@ -1,0 +1,26 @@
+flowchart LR
+  Frontend[React Frontend] --> Gateway[Spring Cloud Gateway]
+  Gateway --> Auth[Auth Service]
+  Gateway --> Users[User Service]
+  Gateway --> Inventory[Inventory Service]
+  Gateway --> Orders[Order Service]
+  Gateway --> Procurement[Procurement Service]
+  Gateway --> Suppliers[Supplier Service]
+  Gateway --> Shipments[Shipment Service]
+  Gateway --> Notifications[Notification Service]
+  Gateway --> Analytics[Analytics Service]
+  Inventory --> Rabbit[(RabbitMQ)]
+  Orders --> Rabbit
+  Suppliers --> Rabbit
+  Shipments --> Rabbit
+  Rabbit --> Notifications
+  Rabbit --> Analytics
+  Auth --> AuthDb[(auth_db)]
+  Users --> UserDb[(user_db)]
+  Inventory --> InventoryDb[(inventory_db)]
+  Orders --> OrderDb[(order_db)]
+  Suppliers --> SupplierDb[(supplier_db)]
+  Shipments --> ShipmentDb[(shipment_db)]
+  Notifications --> NotificationDb[(notification_db)]
+  Analytics --> AnalyticsDb[(analytics_db)]
+

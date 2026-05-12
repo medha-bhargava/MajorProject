@@ -1,0 +1,29 @@
+server:
+  port: ${SERVER_PORT:8084}
+spring:
+  application:
+    name: order-service
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/order_db}
+    username: ${SPRING_DATASOURCE_USERNAME:smart}
+    password: ${SPRING_DATASOURCE_PASSWORD:smart}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+app:
+  rabbitmq:
+    exchange: smart.inventory.events
+    queues:
+      procurementCompleted: inventory.procurement.completed
+

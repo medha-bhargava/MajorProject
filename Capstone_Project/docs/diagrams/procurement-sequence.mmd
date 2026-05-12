@@ -1,0 +1,14 @@
+sequenceDiagram
+  participant Buyer as Procurement Manager
+  participant GW as API Gateway
+  participant ORD as Order Service
+  participant MQ as RabbitMQ
+  participant INV as Inventory Service
+  participant ANA as Analytics Service
+  Buyer->>GW: POST /api/orders/{id}/complete
+  GW->>ORD: Forward completion
+  ORD->>ORD: Mark order COMPLETED
+  ORD->>MQ: Publish procurement.completed
+  MQ->>INV: Update stock by SKU
+  MQ->>ANA: Store demand history
+

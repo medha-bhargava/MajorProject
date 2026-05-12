@@ -1,0 +1,4 @@
+# Convenience pointer: use ../../docker-compose.yml from the monorepo root.
+include:
+  - ../../docker-compose.yml
+

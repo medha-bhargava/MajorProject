@@ -1,0 +1,38 @@
+erDiagram
+  APP_USER ||--o{ REFRESH_TOKEN : owns
+  USER_PROFILE {
+    uuid id
+    string email
+    string role
+    string warehouseCode
+  }
+  INVENTORY_ITEM ||--o{ STOCK_MOVEMENT : records
+  INVENTORY_ITEM {
+    uuid id
+    string sku
+    int quantity
+    int lowStockThreshold
+  }
+  SUPPLIER ||--o{ PURCHASE_ORDER : fulfills
+  PURCHASE_ORDER {
+    uuid id
+    string sku
+    int quantity
+    string status
+  }
+  SHIPMENT {
+    uuid id
+    string trackingNumber
+    string status
+  }
+  NOTIFICATION {
+    uuid id
+    string type
+    datetime created_at
+  }
+  ANALYTICS_EVENT {
+    uuid id
+    string event_type
+    json payload
+  }
+

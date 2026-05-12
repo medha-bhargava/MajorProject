@@ -1,0 +1,4 @@
+import { PageHeader } from '../components/PageHeader';
+import { useAppSelector } from '../hooks/useAppSelector';
+export function Suppliers(){ const suppliers=useAppSelector(s=>s.data.suppliers); return <><PageHeader title="Supplier Management" subtitle="Manage supplier registration, ratings, contacts, and lead times."/><div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{suppliers.map(supplier=><div key={supplier.id} className="rounded-lg border bg-white p-5 shadow-sm"><div className="font-semibold text-ink">{supplier.name}</div><div className="mt-1 text-sm text-steel">{supplier.productCategory}</div><div className="mt-4 text-sm">Rating {supplier.rating} / 5 · Lead time {supplier.averageLeadTimeDays} days</div><div className="mt-2 text-sm text-steel">{supplier.contactPerson} · {supplier.email}</div></div>)}</div></> }
+

@@ -1,0 +1,13 @@
+sequenceDiagram
+  participant UI as React Dashboard
+  participant GW as API Gateway
+  participant INV as Inventory Service
+  participant MQ as RabbitMQ
+  participant NOTIF as Notification Service
+  UI->>GW: POST /api/inventory/{id}/adjust
+  GW->>INV: Forward with identity headers
+  INV->>INV: Persist stock movement
+  INV->>MQ: Publish inventory.low_stock_detected
+  MQ->>NOTIF: Consume event
+  NOTIF->>NOTIF: Persist alert and send email
+
