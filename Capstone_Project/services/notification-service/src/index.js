@@ -7,7 +7,7 @@ const port = Number(process.env.PORT || 3001);
 async function main() {
   await initDb();
   startConsumers().catch(error => console.error('RabbitMQ consumer startup failed', error));
-  createApp().listen(port, () => console.log('notification-service listening on ' + port));
+  createApp().listen(port, () => console.log('Notification-service listening on ' + port));
 }
 
 main().catch(error => {

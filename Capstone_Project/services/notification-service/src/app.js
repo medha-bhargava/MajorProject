@@ -7,7 +7,7 @@ const db = require('./db');
 function createApp() {
   const app = express();
   app.use(helmet());
-  app.use(cors());
+  //app.use(cors());
   app.use(express.json());
   app.get('/health', (_req, res) => res.json({ status: 'UP' }));
   app.get('/notifications', async (_req, res, next) => {

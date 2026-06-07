@@ -22,6 +22,7 @@ public class JwtGatewayFilter implements GlobalFilter, Ordered {
     private final Map<String, Window> windows = new ConcurrentHashMap<>();
 
     public JwtGatewayFilter(@Value("${app.jwt-secret}") String jwtSecret) {
+        System.out.println("Gateway JWT secret length = " + jwtSecret.length());
         this.secret = jwtSecret.getBytes(StandardCharsets.UTF_8);
     }
 
@@ -42,12 +43,31 @@ public class JwtGatewayFilter implements GlobalFilter, Ordered {
         }
         try {
             var claims = Jwts.parser().verifyWith(Keys.hmacShaKeyFor(secret)).build().parseSignedClaims(header.substring(7)).getPayload();
-            var mutated = exchange.getRequest().mutate()
-                    .header("X-User-Email", claims.getSubject())
-                    .header("X-User-Role", String.valueOf(claims.get("role")))
-                    .build();
-            return chain.filter(exchange.mutate().request(mutated).build());
+            
+            // var mutated = exchange.getRequest().mutate()
+            //         .header("X-User-Email", claims.getSubject())
+            //         .header("X-User-Role", String.valueOf(claims.get("role")))
+            //         .build();
+
+            // var mutated = exchange.getRequest().mutate()
+            //     .headers(headers -> {
+            //         headers.set("X-User-Email", claims.getSubject());
+            //         headers.set("X-User-Role", String.valueOf(claims.get("role")));
+            //     })
+            //     .build();
+            // return chain.filter(exchange.mutate().request(mutated).build());
+
+            Jwts.parser()
+                .verifyWith(Keys.hmacShaKeyFor(secret))
+                .build()
+                .parseSignedClaims(header.substring(7))
+                .getPayload();
+            return chain.filter(exchange);
         } catch (RuntimeException ex) {
+            ex.printStackTrace();
+            System.out.println("JWT validation failed: " + ex.getClass().getName());
+            System.out.println("JWT validation message: " + ex.getMessage());
+            // ex.printStackTrace();
             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
             return exchange.getResponse().setComplete();
         }
