@@ -3,6 +3,7 @@ import os
 import threading
 import pika
 from .db import get_connection
+from datetime import datetime, timezone
 
 EXCHANGE = 'smart.inventory.events'
 BINDINGS = [
@@ -14,7 +15,12 @@ BINDINGS = [
 
 def persist_event(event_type: str, payload: dict):
     with get_connection() as conn:
-        conn.execute('INSERT INTO analytics_events(event_type, payload) VALUES (%s, %s::jsonb)', (event_type, json.dumps(payload)))
+        # conn.execute('INSERT INTO analytics_events(event_type, payload) VALUES (%s, %s::jsonb)', (event_type, json.dumps(payload)))
+        period = datetime.now(timezone.utc).strftime('%Y-%m')
+        conn.execute(
+            'INSERT INTO demand_history(sku, period, demand) VALUES (%s, %s, %s)',
+            (payload['sku'], period, int(payload['quantity']))
+        )
         if event_type == 'procurement.completed' and payload.get('sku') and payload.get('quantity'):
             conn.execute('INSERT INTO demand_history(sku, period, demand) VALUES (%s, %s, %s)', (payload['sku'], 'current', int(payload['quantity'])))
         conn.commit()

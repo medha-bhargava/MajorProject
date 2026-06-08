@@ -64,16 +64,37 @@ def supplier_performance():
     ]
 
 
+# @app.get('/analytics/stock-trends')
+# def stock_trends():
+#     return [
+#         {'period': 'Jan', 'stockIn': 420, 'stockOut': 310},
+#         {'period': 'Feb', 'stockIn': 460, 'stockOut': 355},
+#         {'period': 'Mar', 'stockIn': 510, 'stockOut': 390},
+#         {'period': 'Apr', 'stockIn': 530, 'stockOut': 420},
+#         {'period': 'May', 'stockIn': 580, 'stockOut': 455},
+#     ]
+
 @app.get('/analytics/stock-trends')
 def stock_trends():
-    return [
-        {'period': 'Jan', 'stockIn': 420, 'stockOut': 310},
-        {'period': 'Feb', 'stockIn': 460, 'stockOut': 355},
-        {'period': 'Mar', 'stockIn': 510, 'stockOut': 390},
-        {'period': 'Apr', 'stockIn': 530, 'stockOut': 420},
-        {'period': 'May', 'stockIn': 580, 'stockOut': 455},
-    ]
+    with get_connection() as conn:
+        rows = conn.execute('''
+            SELECT
+                period,
+                COALESCE(SUM(demand), 0) AS stock_in
+            FROM demand_history
+            GROUP BY period
+            ORDER BY period
+            LIMIT 12
+        ''').fetchall()
 
+    return [
+        {
+            'period': row[0],
+            'stockIn': row[1],
+            'stockOut': 0
+        }
+        for row in rows
+    ]
 
 @app.post('/analytics/forecast')
 def forecast(request: ForecastRequest):

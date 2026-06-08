@@ -26,7 +26,8 @@
 //   </div>;
 // }
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { loadDashboardData } from '../store/dataSlice';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAppDispatch } from '../hooks/useAppDispatch';
 import { useAppSelector } from '../hooks/useAppSelector';
@@ -48,6 +49,11 @@ const links = [
 export function Layout() {
   const user = useAppSelector(state => state.auth.user);
   const dispatch = useAppDispatch();
+
+  useEffect(() => {
+    dispatch(loadDashboardData());
+  }, [dispatch]);
+
   const navigate = useNavigate();
   const [permissionDialog, setPermissionDialog] = useState<string | null>(null);
 
