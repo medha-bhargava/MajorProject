@@ -26,7 +26,7 @@
 //   </div>;
 // }
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { loadDashboardData } from '../store/dataSlice';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAppDispatch } from '../hooks/useAppDispatch';
@@ -49,8 +49,11 @@ const links = [
 export function Layout() {
   const user = useAppSelector(state => state.auth.user);
   const dispatch = useAppDispatch();
+  const loadedRef = useRef(false);
 
   useEffect(() => {
+    if (loadedRef.current) return;
+    loadedRef.current = true;
     dispatch(loadDashboardData());
   }, [dispatch]);
 

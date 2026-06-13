@@ -20,6 +20,7 @@ import reactor.core.publisher.Mono;
 public class JwtGatewayFilter implements GlobalFilter, Ordered {
     private final byte[] secret;
     private final Map<String, Window> windows = new ConcurrentHashMap<>();
+    private static final int RATE_LIMIT_PER_MINUTE = 1000;
 
     public JwtGatewayFilter(@Value("${app.jwt-secret}") String jwtSecret) {
         System.out.println("Gateway JWT secret length = " + jwtSecret.length());
@@ -81,7 +82,8 @@ public class JwtGatewayFilter implements GlobalFilter, Ordered {
         String key = exchange.getRequest().getRemoteAddress() == null ? "unknown" : exchange.getRequest().getRemoteAddress().getAddress().getHostAddress();
         long now = System.currentTimeMillis();
         Window window = windows.compute(key, (ignored, existing) -> existing == null || now - existing.startedAt > Duration.ofMinutes(1).toMillis() ? new Window(now, 1) : existing.increment());
-        return window.count > 180;
+        // return window.count > 180;
+        return window.count > RATE_LIMIT_PER_MINUTE;
     }
 
     @Override

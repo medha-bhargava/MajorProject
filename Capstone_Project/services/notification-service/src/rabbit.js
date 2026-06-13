@@ -14,11 +14,10 @@ function notificationFromEvent(routingKey, payload) {
     return { type: 'LOW_STOCK', title: 'Low stock detected', message: (payload.name || payload.sku) + ' is at ' + payload.quantity + ' units', payload };
   }
   if (routingKey === 'procurement.approved') {
-    // return { type: 'PROCUREMENT_APPROVED', title: 'Procurement approved', message: 'Purchase order ' + payload.orderId + ' was approved', payload };
-    return { type: 'PROCUREMENT_APPROVED', title: 'Procurement approved', message: 'Purchase order for ' + payload.quantity + ' units of ' + payload.sku + ' was approved', payload };
+    return { type: 'PROCUREMENT_APPROVED', title: 'Procurement approved', message: 'Purchase order for ' + payload.quantity + ' units of ' + (payload.itemName || payload.sku) + ' was approved', payload };
   }
   if (routingKey === 'procurement.completed') {
-    return { type: 'PROCUREMENT_COMPLETED', title: 'Procurement completed', message: 'Received ' + payload.quantity + ' units for ' + payload.sku, payload };
+    return { type: 'PROCUREMENT_COMPLETED', title: 'Procurement completed', message: 'Received ' + payload.quantity + ' units for ' + (payload.itemName || payload.sku), payload };
   }
   if (routingKey === 'shipment.delivered') {
     return { type: 'SHIPMENT_DELIVERED', title: 'Shipment delivered', message: 'Shipment ' + payload.trackingNumber + ' delivered', payload };
@@ -50,4 +49,3 @@ async function startConsumers() {
 }
 
 module.exports = { startConsumers, notificationFromEvent };
-

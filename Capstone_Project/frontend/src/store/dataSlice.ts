@@ -60,6 +60,12 @@ export const loadDashboardData = createAsyncThunk(
         'Failed to load dashboard data'
       );
     }
+  },
+  {
+    condition: (_, { getState }) => {
+      const state = getState() as { data: DataState };
+      return !state.data.loading;
+    },
   }
 );
 
