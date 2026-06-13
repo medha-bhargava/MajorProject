@@ -158,6 +158,7 @@ services:
     environment:
       PORT: 8000
       DATABASE_URL: postgresql://${POSTGRES_USER:-smart}:${POSTGRES_PASSWORD:-smart}@postgres:5432/analytics_db
+      INVENTORY_DATABASE_URL: postgresql://${POSTGRES_USER:-smart}:${POSTGRES_PASSWORD:-smart}@postgres:5432/inventory_db
       RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
     ports:
       - "8000:8000"

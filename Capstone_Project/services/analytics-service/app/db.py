@@ -2,10 +2,15 @@ import os
 import psycopg
 
 DATABASE_URL = os.getenv('DATABASE_URL', 'postgresql://smart:smart@localhost:5432/analytics_db')
+INVENTORY_DATABASE_URL = os.getenv('INVENTORY_DATABASE_URL', 'postgresql://smart:smart@localhost:5432/inventory_db')
 
 
 def get_connection():
     return psycopg.connect(DATABASE_URL)
+
+
+def get_inventory_connection():
+    return psycopg.connect(INVENTORY_DATABASE_URL)
 
 
 def init_db():
@@ -29,4 +34,3 @@ def init_db():
             )
         ''')
         conn.commit()
-

@@ -41,6 +41,7 @@ const links = [
   { label: 'Suppliers', to: '/suppliers', module: 'suppliers' },
   { label: 'Procurement', to: '/orders', module: 'orders' },
   { label: 'Shipments', to: '/shipments', module: 'shipments' },
+  { label: 'Sales', to: '/sales', module: 'sales' },
   { label: 'Analytics', to: '/analytics', module: 'analytics' },
   { label: 'Notifications', to: '/notifications', module: 'notifications' },
   { label: 'Profile', to: '/profile', module: 'profile' }

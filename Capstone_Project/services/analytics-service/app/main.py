@@ -2,7 +2,7 @@ from contextlib import asynccontextmanager
 import os
 from fastapi import FastAPI
 from pydantic import BaseModel, Field
-from .db import init_db, get_connection
+from .db import init_db, get_connection, get_inventory_connection
 from .forecasting import moving_average_forecast
 from .rabbit import start_consumer_thread
 
@@ -77,7 +77,7 @@ def supplier_performance():
 @app.get('/analytics/stock-trends')
 def stock_trends():
     with get_connection() as conn:
-        rows = conn.execute('''
+        stock_in_rows = conn.execute('''
             SELECT
                 to_char(created_at, 'YYYY-MM') AS period,
                 COALESCE(SUM(
@@ -93,13 +93,36 @@ def stock_trends():
             LIMIT 12
         ''').fetchall()
 
+    try:
+        with get_inventory_connection() as conn:
+            stock_out_rows = conn.execute('''
+                SELECT period, stock_out
+                FROM (
+                    SELECT
+                        to_char(created_at, 'YYYY-MM') AS period,
+                        COALESCE(SUM(quantity), 0) AS stock_out
+                    FROM sales_records
+                    WHERE status = 'SOLD'
+                    GROUP BY period
+                    ORDER BY period DESC
+                    LIMIT 12
+                ) latest_sales
+                ORDER BY period
+            ''').fetchall()
+    except Exception as exc:
+        print(f'Sales stock-out aggregation skipped: {exc}')
+        stock_out_rows = []
+
+    trends = {}
+    for period, stock_in in stock_in_rows:
+        trends[period] = {'period': period, 'stockIn': stock_in, 'stockOut': 0}
+    for period, stock_out in stock_out_rows:
+        trends.setdefault(period, {'period': period, 'stockIn': 0, 'stockOut': 0})
+        trends[period]['stockOut'] = stock_out
+
     return [
-        {
-            'period': row[0],
-            'stockIn': row[1],
-            'stockOut': 0
-        }
-        for row in rows
+        trends[period]
+        for period in sorted(trends)
     ]
 
 @app.post('/analytics/forecast')

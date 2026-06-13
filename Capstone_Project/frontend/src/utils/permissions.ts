@@ -1,11 +1,11 @@
 import type { Role } from '../types';
 
-type ModuleKey = 'dashboard' | 'inventory' | 'suppliers' | 'orders' | 'shipments' | 'analytics' | 'notifications' | 'profile';
+type ModuleKey = 'dashboard' | 'inventory' | 'suppliers' | 'orders' | 'shipments' | 'sales' | 'analytics' | 'notifications' | 'profile';
 
 const roleAccess: Record<string, ModuleKey[]> = {
-  ADMIN: ['dashboard', 'inventory', 'suppliers', 'orders', 'shipments', 'analytics', 'notifications', 'profile'],
-  WAREHOUSE: ['dashboard', 'inventory', 'shipments', 'notifications', 'profile'],
-  WAREHOUSE_MANAGER: ['dashboard', 'inventory', 'shipments', 'notifications', 'profile'],
+  ADMIN: ['dashboard', 'inventory', 'suppliers', 'orders', 'shipments', 'sales', 'analytics', 'notifications', 'profile'],
+  WAREHOUSE: ['dashboard', 'inventory', 'shipments', 'sales', 'notifications', 'profile'],
+  WAREHOUSE_MANAGER: ['dashboard', 'inventory', 'shipments', 'sales', 'notifications', 'profile'],
   PROCUREMENT: ['dashboard', 'orders', 'suppliers', 'notifications', 'profile'],
   PROCUREMENT_MANAGER: ['dashboard', 'orders', 'suppliers', 'notifications', 'profile'],
   SUPPLIER: ['dashboard', 'orders', 'shipments', 'notifications', 'profile']
