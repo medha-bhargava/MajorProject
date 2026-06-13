@@ -20,7 +20,8 @@ function notificationFromEvent(routingKey, payload) {
     return { type: 'PROCUREMENT_COMPLETED', title: 'Procurement completed', message: 'Received ' + payload.quantity + ' units for ' + (payload.itemName || payload.sku), payload };
   }
   if (routingKey === 'shipment.delivered') {
-    return { type: 'SHIPMENT_DELIVERED', title: 'Shipment delivered', message: 'Shipment ' + payload.trackingNumber + ' delivered', payload };
+    const received = payload.quantity && payload.sku ? ' with ' + payload.quantity + ' units of ' + payload.sku : '';
+    return { type: 'SHIPMENT_DELIVERED', title: 'Shipment delivered', message: 'Shipment ' + payload.trackingNumber + ' delivered' + received, payload };
   }
   return { type: 'EVENT', title: routingKey, message: JSON.stringify(payload), payload };
 }

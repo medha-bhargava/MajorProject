@@ -29,6 +29,8 @@ type ShipmentForm = {
   carrier: string;
   originWarehouse: string;
   destinationWarehouse: string;
+  sku: string;
+  quantity: string;
 };
 
 const initialOrderForm: OrderForm = {
@@ -45,6 +47,8 @@ const initialShipmentForm: ShipmentForm = {
   carrier: '',
   originWarehouse: '',
   destinationWarehouse: '',
+  sku: '',
+  quantity: '',
 };
 
 export function Orders() {
@@ -117,6 +121,8 @@ export function Orders() {
       carrier: '',
       originWarehouse: 'Supplier Dispatch',
       destinationWarehouse: 'Main Warehouse',
+      sku: order.sku,
+      quantity: String(order.quantity),
     });
   };
 
@@ -193,6 +199,9 @@ export function Orders() {
         carrier: shipmentForm.carrier.trim(),
         originWarehouse: shipmentForm.originWarehouse.trim(),
         destinationWarehouse: shipmentForm.destinationWarehouse.trim(),
+        sku: shipmentForm.sku.trim(),
+        quantity: Number(shipmentForm.quantity),
+        orderId: shipmentOrder?.id,
       });
 
       await dispatch(loadDashboardData()).unwrap();
@@ -530,7 +539,6 @@ export function Orders() {
             </div>
           }
         >
-          {/* TODO: Shipment API does not support orderId yet, so this creates a shipment record using order context but cannot persist a hard order-shipment link. */}
           <form
             id="order-shipment-form"
             onSubmit={handleShipmentSubmit}
@@ -585,6 +593,28 @@ export function Orders() {
                 value={shipmentForm.destinationWarehouse}
                 onChange={(event) =>
                   updateShipmentForm('destinationWarehouse', event.target.value)
+                }
+                required
+              />
+              <input
+                className="rounded-md border px-3 py-2 text-sm"
+                aria-label="SKU"
+                placeholder="SKU"
+                value={shipmentForm.sku}
+                onChange={(event) =>
+                  updateShipmentForm('sku', event.target.value)
+                }
+                required
+              />
+              <input
+                className="rounded-md border px-3 py-2 text-sm"
+                aria-label="Quantity"
+                placeholder="Quantity"
+                type="number"
+                min="1"
+                value={shipmentForm.quantity}
+                onChange={(event) =>
+                  updateShipmentForm('quantity', event.target.value)
                 }
                 required
               />

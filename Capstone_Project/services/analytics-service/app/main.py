@@ -79,9 +79,15 @@ def stock_trends():
     with get_connection() as conn:
         rows = conn.execute('''
             SELECT
-                period,
-                COALESCE(SUM(demand), 0) AS stock_in
-            FROM demand_history
+                to_char(created_at, 'YYYY-MM') AS period,
+                COALESCE(SUM(
+                    CASE
+                        WHEN payload ? 'quantity' THEN (payload->>'quantity')::integer
+                        ELSE 0
+                    END
+                ), 0) AS stock_in
+            FROM analytics_events
+            WHERE event_type = 'shipment.delivered'
             GROUP BY period
             ORDER BY period
             LIMIT 12

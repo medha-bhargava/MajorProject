@@ -20,6 +20,8 @@ type ShipmentForm = {
   carrier: string;
   originWarehouse: string;
   destinationWarehouse: string;
+  sku: string;
+  quantity: string;
 };
 
 const initialShipmentForm: ShipmentForm = {
@@ -27,6 +29,8 @@ const initialShipmentForm: ShipmentForm = {
   carrier: '',
   originWarehouse: '',
   destinationWarehouse: '',
+  sku: '',
+  quantity: '',
 };
 
 export function Shipments() {
@@ -66,6 +70,8 @@ export function Shipments() {
         carrier: form.carrier.trim(),
         originWarehouse: form.originWarehouse.trim(),
         destinationWarehouse: form.destinationWarehouse.trim(),
+        sku: form.sku.trim(),
+        quantity: Number(form.quantity),
       });
 
       await dispatch(loadDashboardData()).unwrap();
@@ -91,6 +97,12 @@ export function Shipments() {
     try {
       await api.post(`/shipments/${shipmentId}/${action}`);
       await dispatch(loadDashboardData()).unwrap();
+
+      if (action === 'delivered') {
+        window.setTimeout(() => {
+          void dispatch(loadDashboardData());
+        }, 750);
+      }
     } catch (err: any) {
       setActionError(
         err.response?.data?.message ||
@@ -180,6 +192,11 @@ export function Shipments() {
         </div>
       )}
 
+      <div className="mb-4 rounded-md border border-slate-200 bg-white px-4 py-3 text-sm text-steel shadow-sm">
+        Delivered shipments replenish inventory when SKU and quantity match an
+        existing inventory item.
+      </div>
+
       {loading ? (
         <div className="grid gap-4 md:grid-cols-2">
           {[1, 2].map((card) => (
@@ -214,6 +231,11 @@ export function Shipments() {
                 {shipment.carrier} · {shipment.originWarehouse} to{' '}
                 {shipment.destinationWarehouse}
               </div>
+              {shipment.sku && (
+                <div className="mt-2 text-sm font-medium text-ink">
+                  {shipment.quantity || 0} units · {shipment.sku}
+                </div>
+              )}
 
               {renderShipmentActions(shipment)}
             </Card>
@@ -285,6 +307,24 @@ export function Shipments() {
                 onChange={(event) =>
                   updateForm('destinationWarehouse', event.target.value)
                 }
+                required
+              />
+              <input
+                className="rounded-md border px-3 py-2 text-sm"
+                aria-label="SKU"
+                placeholder="SKU"
+                value={form.sku}
+                onChange={(event) => updateForm('sku', event.target.value)}
+                required
+              />
+              <input
+                className="rounded-md border px-3 py-2 text-sm"
+                aria-label="Quantity"
+                placeholder="Quantity"
+                type="number"
+                min="1"
+                value={form.quantity}
+                onChange={(event) => updateForm('quantity', event.target.value)}
                 required
               />
             </div>
