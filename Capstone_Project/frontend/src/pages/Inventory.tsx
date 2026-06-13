@@ -220,7 +220,7 @@ export function Inventory() {
                       <span>{item.name}</span>
                       {item.lowStock && (
                         <span className="rounded-md bg-rose-100 px-2 py-0.5 text-xs font-semibold text-rose-700">
-                          Low stock
+                          LOW STOCK
                         </span>
                       )}
                     </div>

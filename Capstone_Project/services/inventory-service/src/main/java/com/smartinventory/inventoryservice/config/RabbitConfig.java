@@ -20,10 +20,10 @@ public class RabbitConfig {
         template.setMessageConverter(converter);
         return template;
     }
-    @Bean Queue procurementCompletedQueue() { return new Queue("inventory.procurement.completed", true); }
-    @Bean Binding procurementCompletedBinding(Queue procurementCompletedQueue, TopicExchange smartExchange) {
-        return BindingBuilder.bind(procurementCompletedQueue).to(smartExchange).with("procurement.completed");
-    }
+    // @Bean Queue procurementCompletedQueue() { return new Queue("inventory.procurement.completed", true); }
+    // @Bean Binding procurementCompletedBinding(Queue procurementCompletedQueue, TopicExchange smartExchange) {
+    //     return BindingBuilder.bind(procurementCompletedQueue).to(smartExchange).with("procurement.completed");
+    // }
     @Bean Queue shipmentDeliveredQueue() { return new Queue("inventory.shipment.delivered", true); }
     @Bean Binding shipmentDeliveredBinding(Queue shipmentDeliveredQueue, TopicExchange smartExchange) {
         return BindingBuilder.bind(shipmentDeliveredQueue).to(smartExchange).with("shipment.delivered");

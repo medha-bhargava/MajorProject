@@ -19,24 +19,42 @@ export function Dashboard() {
     {
       label: 'Pending Orders',
       value: data.orders.filter((order) => order.status === 'PENDING').length,
-      detail: 'Awaiting approval',
+      detail: 'AWAITING APPROVAL',
+      detailColor:
+        data.orders.filter((order) => order.status === 'PENDING').length > 0
+          ? 'bg-amber-100 text-amber-700'
+          : 'bg-slate-100 text-steel',
     },
     {
       label: 'Approved Orders',
       value: data.orders.filter((order) => order.status === 'APPROVED').length,
-      detail: 'Ready to start',
+      detail: 'READY TO START',
+      detailColor:
+        data.orders.filter((order) => order.status === 'APPROVED').length > 0
+          ? 'bg-emerald-100 text-emerald-700'
+          : 'bg-slate-100 text-steel',
     },
     {
       label: 'Low Stock Items',
       value: data.inventory.filter((item) => item.lowStock).length,
-      detail: 'Need attention',
+      detail: 'NEED ATTENTION',
+      detailColor:
+        data.inventory.filter((item) => item.lowStock).length > 0
+          ? 'bg-rose-100 text-rose-700'
+          : 'bg-slate-100 text-steel',
     },
     {
       label: 'Delivered Shipments',
       value: data.shipments.filter(
         (shipment) => shipment.status === 'DELIVERED'
       ).length,
-      detail: 'Completed deliveries',
+      detail: 'COMPLETED DELIVERIES',
+      detailColor:
+        data.shipments.filter(
+          (shipment) => shipment.status === 'DELIVERED'
+        ).length > 0
+          ? 'bg-sky-100 text-sky-700'
+          : 'bg-slate-100 text-steel',
     },
   ];
 
@@ -80,8 +98,12 @@ export function Dashboard() {
               <div className="mt-3 text-3xl font-semibold text-ink">
                 {item.value}
               </div>
-              <div className="mt-1 text-xs font-medium text-steel">
-                {item.detail}
+              <div className="mt-2">
+                <span
+                  className={`inline-flex rounded-md px-2.5 py-1 text-xs font-medium ${item.detailColor}`}
+                >
+                  {item.detail}
+                </span>
               </div>
             </div>
           ))}

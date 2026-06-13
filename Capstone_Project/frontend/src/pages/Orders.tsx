@@ -373,7 +373,7 @@ export function Orders() {
                 <th>Supplier</th>
                 <th>Qty</th>
                 <th>Status</th>
-                <th>Unit cost</th>
+                <th>Procurement cost</th>
                 {canManageOrders && <th>Actions</th>}
               </tr>
             </thead>
@@ -502,7 +502,7 @@ export function Orders() {
               <input
                 className="rounded-md border px-3 py-2 text-sm"
                 aria-label="Unit cost"
-                placeholder="Unit cost"
+                placeholder="Procurement cost"
                 type="number"
                 min="0"
                 step="0.01"

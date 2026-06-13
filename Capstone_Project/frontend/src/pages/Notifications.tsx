@@ -35,7 +35,7 @@ export function Notifications() {
     <>
       <PageHeader
         title="Notifications"
-        subtitle="Low-stock, procurement, and shipment alerts from RabbitMQ workflows."
+        subtitle="Low-stock, procurement, and shipment alerts."
       />
 
       {error && (
