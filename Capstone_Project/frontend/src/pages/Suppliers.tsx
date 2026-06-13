@@ -37,6 +37,7 @@ const initialSupplierForm: SupplierForm = {
 export function Suppliers() {
   const dispatch = useAppDispatch();
   const suppliers = useAppSelector((state) => state.data.suppliers);
+  const orders = useAppSelector((state) => state.data.orders);
   const loading = useAppSelector((state) => state.data.loading);
   const role = useAppSelector((state) => state.auth.user?.role);
 
@@ -131,21 +132,51 @@ export function Suppliers() {
         />
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {suppliers.map((supplier) => (
-            <Card key={supplier.id}>
-              <div className="font-semibold text-ink">{supplier.name}</div>
-              <div className="mt-1 text-sm text-steel">
-                {supplier.productCategory}
-              </div>
-              <div className="mt-4 text-sm font-medium text-ink">
-                Rating {supplier.rating} / 5 · Lead time{' '}
-                {supplier.averageLeadTimeDays} days
-              </div>
-              <div className="mt-2 text-sm text-steel">
-                {supplier.contactPerson} · {supplier.email}
-              </div>
-            </Card>
-          ))}
+          {suppliers.map((supplier) => {
+            const supplierOrders = orders.filter(
+              (order) => order.supplierId === supplier.id
+            );
+            const openOrders = supplierOrders.filter(
+              (order) => order.status !== 'COMPLETED' && order.status !== 'REJECTED'
+            ).length;
+            const completedOrders = supplierOrders.filter(
+              (order) => order.status === 'COMPLETED'
+            ).length;
+
+            return (
+              <Card key={supplier.id}>
+                <div className="font-semibold text-ink">{supplier.name}</div>
+                <div className="mt-1 text-sm text-steel">
+                  {supplier.productCategory}
+                </div>
+                <div className="mt-4 text-sm font-medium text-ink">
+                  Rating {supplier.rating} / 5 · Lead time{' '}
+                  {supplier.averageLeadTimeDays} days
+                </div>
+                <div className="mt-2 text-sm text-steel">
+                  {supplier.contactPerson} · {supplier.email}
+                </div>
+                <div className="mt-4 grid grid-cols-2 gap-2 border-t border-slate-100 pt-4">
+                  <div>
+                    <div className="text-xs font-semibold uppercase tracking-wide text-steel">
+                      Open orders
+                    </div>
+                    <div className="mt-1 text-lg font-semibold text-ink">
+                      {openOrders}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-xs font-semibold uppercase tracking-wide text-steel">
+                      Completed
+                    </div>
+                    <div className="mt-1 text-lg font-semibold text-ink">
+                      {completedOrders}
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            );
+          })}
         </div>
       )}
 

@@ -13,7 +13,7 @@ import { useAppDispatch } from '../hooks/useAppDispatch';
 import { useAppSelector } from '../hooks/useAppSelector';
 import { loadDashboardData } from '../store/dataSlice';
 import { canAccess, permissionMessage } from '../utils/permissions';
-import type { InventoryItem } from '../types';
+import type { InventoryItem, PurchaseOrder } from '../types';
 
 type OrderForm = {
   sku: string;
@@ -24,6 +24,13 @@ type OrderForm = {
   unitCost: string;
 };
 
+type ShipmentForm = {
+  trackingNumber: string;
+  carrier: string;
+  originWarehouse: string;
+  destinationWarehouse: string;
+};
+
 const initialOrderForm: OrderForm = {
   sku: '',
   itemName: '',
@@ -31,6 +38,13 @@ const initialOrderForm: OrderForm = {
   supplierId: '',
   requestedBy: '',
   unitCost: '',
+};
+
+const initialShipmentForm: ShipmentForm = {
+  trackingNumber: '',
+  carrier: '',
+  originWarehouse: '',
+  destinationWarehouse: '',
 };
 
 export function Orders() {
@@ -48,10 +62,17 @@ export function Orders() {
   const [actionSavingId, setActionSavingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [shipmentOrder, setShipmentOrder] = useState<PurchaseOrder | null>(null);
+  const [shipmentForm, setShipmentForm] = useState(initialShipmentForm);
+  const [shipmentSaving, setShipmentSaving] = useState(false);
+  const [shipmentError, setShipmentError] = useState<string | null>(null);
 
   const canView = canAccess(role, 'orders');
   const canManageOrders = role === 'ADMIN' || role === 'PROCUREMENT_MANAGER';
   const lowStockItems = inventory.filter((item) => item.lowStock);
+  const supplierNameById = new Map(
+    suppliers.map((supplier) => [supplier.id, supplier.name])
+  );
 
   const updateForm = (field: keyof OrderForm, value: string) => {
     setForm((current) => ({ ...current, [field]: value }));
@@ -82,6 +103,27 @@ export function Orders() {
     setShowModal(false);
     setForm(initialOrderForm);
     setError(null);
+  };
+
+  const updateShipmentForm = (field: keyof ShipmentForm, value: string) => {
+    setShipmentForm((current) => ({ ...current, [field]: value }));
+  };
+
+  const openShipmentModal = (order: PurchaseOrder) => {
+    setShipmentOrder(order);
+    setShipmentError(null);
+    setShipmentForm({
+      trackingNumber: `PO-${order.id.slice(0, 8).toUpperCase()}`,
+      carrier: '',
+      originWarehouse: 'Supplier Dispatch',
+      destinationWarehouse: 'Main Warehouse',
+    });
+  };
+
+  const closeShipmentModal = () => {
+    setShipmentOrder(null);
+    setShipmentForm(initialShipmentForm);
+    setShipmentError(null);
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -140,6 +182,32 @@ export function Orders() {
     }
   };
 
+  const handleShipmentSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setShipmentSaving(true);
+    setShipmentError(null);
+
+    try {
+      await api.post('/shipments', {
+        trackingNumber: shipmentForm.trackingNumber.trim(),
+        carrier: shipmentForm.carrier.trim(),
+        originWarehouse: shipmentForm.originWarehouse.trim(),
+        destinationWarehouse: shipmentForm.destinationWarehouse.trim(),
+      });
+
+      await dispatch(loadDashboardData()).unwrap();
+      closeShipmentModal();
+    } catch (err: any) {
+      setShipmentError(
+        err.response?.data?.message ||
+          err.response?.data ||
+          'Failed to create shipment'
+      );
+    } finally {
+      setShipmentSaving(false);
+    }
+  };
+
   const renderOrderActions = (order: (typeof orders)[number]) => {
     if (!canManageOrders) return null;
 
@@ -185,6 +253,18 @@ export function Orders() {
         >
           Complete
         </PrimaryButton>
+      );
+    }
+
+    if (order.status === 'COMPLETED') {
+      return (
+        <SecondaryButton
+          className="px-3 py-1.5"
+          disabled={actionSavingId !== null}
+          onClick={() => openShipmentModal(order)}
+        >
+          Create Shipment
+        </SecondaryButton>
       );
     }
 
@@ -281,6 +361,7 @@ export function Orders() {
               <tr>
                 <th className="p-4">Item</th>
                 <th>SKU</th>
+                <th>Supplier</th>
                 <th>Qty</th>
                 <th>Status</th>
                 <th>Unit cost</th>
@@ -294,6 +375,9 @@ export function Orders() {
                     {order.itemName}
                   </td>
                   <td className="text-steel">{order.sku}</td>
+                  <td className="text-steel">
+                    {supplierNameById.get(order.supplierId) || 'Unknown supplier'}
+                  </td>
                   <td className="font-semibold text-ink">{order.quantity}</td>
                   <td>
                     <StatusBadge value={order.status} />
@@ -415,6 +499,93 @@ export function Orders() {
                 step="0.01"
                 value={form.unitCost}
                 onChange={(event) => updateForm('unitCost', event.target.value)}
+                required
+              />
+            </div>
+          </form>
+        </ActionModal>
+      )}
+
+      {shipmentOrder && (
+        <ActionModal
+          title="Create shipment"
+          description={`Create a shipment record for ${shipmentOrder.itemName}.`}
+          onClose={closeShipmentModal}
+          footer={
+            <div className="flex gap-2">
+              <SecondaryButton
+                type="button"
+                onClick={closeShipmentModal}
+                disabled={shipmentSaving}
+              >
+                Cancel
+              </SecondaryButton>
+              <PrimaryButton
+                type="submit"
+                form="order-shipment-form"
+                disabled={shipmentSaving}
+              >
+                {shipmentSaving ? 'Saving...' : 'Save Shipment'}
+              </PrimaryButton>
+            </div>
+          }
+        >
+          {/* TODO: Shipment API does not support orderId yet, so this creates a shipment record using order context but cannot persist a hard order-shipment link. */}
+          <form
+            id="order-shipment-form"
+            onSubmit={handleShipmentSubmit}
+            className="space-y-4"
+          >
+            {shipmentError && (
+              <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+                {shipmentError}
+              </div>
+            )}
+
+            <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-steel">
+              {supplierNameById.get(shipmentOrder.supplierId) || 'Unknown supplier'} ·{' '}
+              {shipmentOrder.quantity} units · {shipmentOrder.sku}
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <input
+                className="rounded-md border px-3 py-2 text-sm"
+                aria-label="Tracking number"
+                placeholder="Tracking number"
+                value={shipmentForm.trackingNumber}
+                onChange={(event) =>
+                  updateShipmentForm('trackingNumber', event.target.value)
+                }
+                required
+              />
+              <input
+                className="rounded-md border px-3 py-2 text-sm"
+                aria-label="Carrier"
+                placeholder="Carrier"
+                value={shipmentForm.carrier}
+                onChange={(event) =>
+                  updateShipmentForm('carrier', event.target.value)
+                }
+                required
+              />
+              <input
+                className="rounded-md border px-3 py-2 text-sm"
+                aria-label="Origin warehouse"
+                placeholder="Origin warehouse"
+                value={shipmentForm.originWarehouse}
+                onChange={(event) =>
+                  updateShipmentForm('originWarehouse', event.target.value)
+                }
+                required
+              />
+              <input
+                className="rounded-md border px-3 py-2 text-sm"
+                aria-label="Destination warehouse"
+                placeholder="Destination warehouse"
+                value={shipmentForm.destinationWarehouse}
+                onChange={(event) =>
+                  updateShipmentForm('destinationWarehouse', event.target.value)
+                }
                 required
               />
             </div>
