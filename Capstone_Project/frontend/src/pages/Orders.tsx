@@ -13,6 +13,7 @@ import { useAppDispatch } from '../hooks/useAppDispatch';
 import { useAppSelector } from '../hooks/useAppSelector';
 import { loadDashboardData } from '../store/dataSlice';
 import { canAccess, permissionMessage } from '../utils/permissions';
+import type { InventoryItem } from '../types';
 
 type OrderForm = {
   sku: string;
@@ -35,6 +36,7 @@ const initialOrderForm: OrderForm = {
 export function Orders() {
   const dispatch = useAppDispatch();
   const orders = useAppSelector((state) => state.data.orders);
+  const inventory = useAppSelector((state) => state.data.inventory);
   const suppliers = useAppSelector((state) => state.data.suppliers);
   const loading = useAppSelector((state) => state.data.loading);
   const user = useAppSelector((state) => state.auth.user);
@@ -49,15 +51,29 @@ export function Orders() {
 
   const canView = canAccess(role, 'orders');
   const canManageOrders = role === 'ADMIN' || role === 'PROCUREMENT_MANAGER';
+  const lowStockItems = inventory.filter((item) => item.lowStock);
 
   const updateForm = (field: keyof OrderForm, value: string) => {
     setForm((current) => ({ ...current, [field]: value }));
   };
 
-  const openModal = () => {
+  // const openModal = () => {
+  //   setForm((current) => ({
+  //     ...current,
+  //     requestedBy: current.requestedBy || user?.fullName || '',
+  //   }));
+  //   setShowModal(true);
+  // };
+  const openModal = (item?: InventoryItem) => {
     setForm((current) => ({
       ...current,
+      sku: item?.sku || current.sku,
+      itemName: item?.name || current.itemName,
+      quantity: item
+        ? String(Math.max(item.lowStockThreshold - item.quantity, 1))
+        : current.quantity,
       requestedBy: current.requestedBy || user?.fullName || '',
+      unitCost: item ? String(item.unitCost) : current.unitCost,
     }));
     setShowModal(true);
   };
@@ -88,8 +104,8 @@ export function Orders() {
     } catch (err: any) {
       setError(
         err.response?.data?.message ||
-          err.response?.data ||
-          'Failed to create procurement order'
+        err.response?.data ||
+        'Failed to create procurement order'
       );
     } finally {
       setSaving(false);
@@ -116,8 +132,8 @@ export function Orders() {
     } catch (err: any) {
       setActionError(
         err.response?.data?.message ||
-          err.response?.data ||
-          'Failed to update procurement order'
+        err.response?.data ||
+        'Failed to update procurement order'
       );
     } finally {
       setActionSavingId(null);
@@ -195,7 +211,7 @@ export function Orders() {
         title="Procurement Orders"
         subtitle="Track approvals, GRNs, and purchase order lifecycle."
         actions={
-          <PrimaryButton onClick={openModal}>
+          <PrimaryButton onClick={() => openModal()}>
             Create Order
           </PrimaryButton>
         }
@@ -204,6 +220,41 @@ export function Orders() {
       {actionError && (
         <div className="mb-4 rounded-md border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
           {actionError}
+        </div>
+      )}
+
+      {canManageOrders && lowStockItems.length > 0 && (
+        <div className="mb-6 rounded-lg border border-rose-200 bg-rose-50 p-5 shadow-sm">
+          <div className="mb-4">
+            <h2 className="text-base font-semibold text-rose-900">
+              Low Stock Reorder Suggestions
+            </h2>
+            <p className="mt-1 text-sm text-rose-700">
+              These inventory items are at or below their reorder threshold.
+            </p>
+          </div>
+
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {lowStockItems.map((item) => (
+              <div
+                key={item.id}
+                className="rounded-md border border-rose-200 bg-white p-4"
+              >
+                <div className="font-semibold text-ink">{item.name}</div>
+                <div className="mt-1 text-sm text-steel">{item.sku}</div>
+                <div className="mt-3 text-sm text-rose-700">
+                  Current {item.quantity} / Threshold {item.lowStockThreshold}
+                </div>
+
+                <PrimaryButton
+                  className="mt-4 px-3 py-1.5"
+                  onClick={() => openModal(item)}
+                >
+                  Create Order
+                </PrimaryButton>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 

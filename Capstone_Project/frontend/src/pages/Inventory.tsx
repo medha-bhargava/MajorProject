@@ -114,8 +114,8 @@ export function Inventory() {
     } catch (err: any) {
       setError(
         err.response?.data?.message ||
-          err.response?.data ||
-          'Failed to create inventory item'
+        err.response?.data ||
+        'Failed to create inventory item'
       );
     } finally {
       setSaving(false);
@@ -141,8 +141,8 @@ export function Inventory() {
     } catch (err: any) {
       setAdjustError(
         err.response?.data?.message ||
-          err.response?.data ||
-          'Failed to adjust stock'
+        err.response?.data ||
+        'Failed to adjust stock'
       );
     } finally {
       setAdjustSaving(false);
@@ -207,9 +207,24 @@ export function Inventory() {
 
             <tbody className="divide-y divide-gray-100">
               {items.map((item) => (
-                <tr className="transition hover:bg-gray-50" key={item.id}>
+                // <tr className="transition hover:bg-gray-50" key={item.id}>
+                <tr
+                  className={`transition hover:bg-gray-50 ${item.lowStock ? 'bg-rose-50/60' : ''
+                    }`}
+                  key={item.id}
+                >
                   <td className="p-4 font-semibold text-ink">{item.sku}</td>
-                  <td className="text-steel">{item.name}</td>
+                  {/* <td className="text-steel">{item.name}</td> */}
+                  <td className="text-steel">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span>{item.name}</span>
+                      {item.lowStock && (
+                        <span className="rounded-md bg-rose-100 px-2 py-0.5 text-xs font-semibold text-rose-700">
+                          Low stock
+                        </span>
+                      )}
+                    </div>
+                  </td>
                   <td className="text-steel">{item.warehouseCode}</td>
                   <td
                     className={
