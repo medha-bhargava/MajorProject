@@ -179,11 +179,11 @@ export function Shipments() {
       <PageHeader
         title="Shipments"
         subtitle="Monitor delivery status, carriers, and warehouse transfers."
-        actions={
-          <PrimaryButton onClick={() => setShowModal(true)}>
-            Create Shipment
-          </PrimaryButton>
-        }
+        // actions={
+        //   <PrimaryButton onClick={() => setShowModal(true)}>
+        //     Create Shipment
+        //   </PrimaryButton>
+        // }
       />
 
       {actionError && (
