@@ -65,6 +65,39 @@ export function Dashboard() {
     };
   }, []);
 
+  const deliveredShipmentOrderIds = new Set(
+    data.shipments
+      .filter((shipment) => shipment.status === 'DELIVERED' && shipment.orderId)
+      .map((shipment) => shipment.orderId)
+  );
+  const deliveredProcurementOrders = data.orders.filter(
+    (order) =>
+      order.status === 'COMPLETED' && deliveredShipmentOrderIds.has(order.id)
+  );
+  const expenseSummary = deliveredProcurementOrders.reduce(
+    (total, order) => total + Number(order.unitCost || 0),
+    0
+  );
+  const topProcuredSkus = Array.from(
+    deliveredProcurementOrders.reduce((totals, order) => {
+      const current = totals.get(order.sku) || {
+        sku: order.sku,
+        itemName: order.itemName,
+        expense: 0,
+      };
+
+      totals.set(order.sku, {
+        ...current,
+        expense: current.expense + Number(order.unitCost || 0),
+      });
+
+      return totals;
+    }, new Map<string, { sku: string; itemName: string; expense: number }>())
+  )
+    .map(([, item]) => item)
+    .sort((a, b) => b.expense - a.expense)
+    .slice(0, 5);
+
   const cards = [
     ['Inventory Items', data.inventory.length],
     ['Suppliers', data.suppliers.length],
@@ -74,6 +107,7 @@ export function Dashboard() {
     ],
     ['Shipments', data.shipments.length],
     ['Revenue', formatCurrency(analytics.revenue)],
+    ['Expense Summary', formatCurrency(expenseSummary)],
   ];
 
   const activitySummary = [
@@ -126,7 +160,7 @@ export function Dashboard() {
         subtitle="Operational command center for inventory and supply chain teams."
       />
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
         {cards.map(([label, value]) => (
           <Card key={label} className="p-5">
             <div className="text-sm font-medium text-steel">{label}</div>
@@ -169,7 +203,7 @@ export function Dashboard() {
 
             <div className="rounded-md border border-slate-200 bg-slate-50 p-4">
               <div className="text-sm font-medium text-steel">Top SKUs</div>
-              <div className="mt-3 space-y-2">
+              <div className="mt-3 max-h-24 space-y-2 overflow-y-auto pr-3">
                 {analytics.topRevenueItems.length === 0 ? (
                   <div className="text-sm text-steel">No sales revenue yet.</div>
                 ) : (
@@ -192,6 +226,63 @@ export function Dashboard() {
             </div>
           </div>
         )}
+      </Card>
+
+      <Card className="mt-6 p-5">
+        <div className="mb-5">
+          <h2 className="text-lg font-semibold text-ink">
+            Expense Summary
+          </h2>
+          <p className="mt-1 text-sm text-steel">
+            Total procurement cost for orders successfully delivered to inventory.
+          </p>
+        </div>
+
+        <div className="grid gap-4 lg:grid-cols-3">
+          <div className="rounded-md border border-slate-200 bg-slate-50 p-4">
+            <div className="text-sm font-medium text-steel">
+              Delivered Procurement Cost
+            </div>
+            <div className="mt-3 text-2xl font-semibold text-ink">
+              {formatCurrency(expenseSummary)}
+            </div>
+          </div>
+
+          <div className="rounded-md border border-slate-200 bg-slate-50 p-4">
+            <div className="text-sm font-medium text-steel">
+              Included Orders
+            </div>
+            <div className="mt-3 text-2xl font-semibold text-ink">
+              {deliveredProcurementOrders.length}
+            </div>
+          </div>
+
+          <div className="rounded-md border border-slate-200 bg-slate-50 p-4">
+            <div className="text-sm font-medium text-steel">
+              Top Procured SKUs
+            </div>
+            <div className="mt-3 max-h-24 space-y-2 overflow-y-auto pr-4">
+              {topProcuredSkus.length === 0 ? (
+                <div className="text-sm text-steel">No delivered procurement yet.</div>
+              ) : (
+                topProcuredSkus.map((item) => (
+                  <div
+                    key={item.sku}
+                    className="flex items-center justify-between gap-3 text-sm"
+                  >
+                    <div>
+                      <div className="font-semibold text-ink">{item.sku}</div>
+                      <div className="text-xs text-steel">{item.itemName}</div>
+                    </div>
+                    <div className="font-semibold text-ink">
+                      {formatCurrency(item.expense)}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
       </Card>
 
       <Card className="mt-6 p-5">
@@ -230,176 +321,3 @@ export function Dashboard() {
     </>
   );
 }
-
-
-
-// import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-// import { PageHeader } from '../components/PageHeader';
-// import { Card } from '../components/ui';
-// import { useAppSelector } from '../hooks/useAppSelector';
-
-// const chart = [
-//   { period: 'Jan', value: 40 },
-//   { period: 'Feb', value: 52 },
-//   { period: 'Mar', value: 48 },
-//   { period: 'Apr', value: 61 },
-//   { period: 'May', value: 66 },
-// ];
-
-// export function Dashboard() {
-//   const data = useAppSelector((state) => state.data);
-//   const cards = [
-//     ['Inventory Items', data.inventory.length],
-//     ['Suppliers', data.suppliers.length],
-//     ['Open Orders', data.orders.filter((order) => order.status !== 'COMPLETED').length],
-//     ['Shipments', data.shipments.length],
-//   ];
-
-//   return (
-//     <>
-//       <PageHeader title="Dashboard" subtitle="Operational command center for inventory and supply chain teams." />
-
-//       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-//         {cards.map(([label, value]) => (
-//           <Card key={label} className="p-5">
-//             <div className="text-sm font-medium text-steel">{label}</div>
-//             <div className="mt-3 text-4xl font-semibold text-ink">{value}</div>
-//           </Card>
-//         ))}
-//       </div>
-
-//       <Card className="mt-6 p-5">
-//         <div className="mb-5">
-//           <h2 className="text-lg font-semibold text-ink">Demand Trend</h2>
-//           <p className="mt-1 text-sm text-steel">Representative demand movement for the current planning cycle.</p>
-//         </div>
-//         <div className="h-72">
-//           <ResponsiveContainer>
-//             <AreaChart data={chart}>
-//               <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-//               <XAxis dataKey="period" />
-//               <YAxis />
-//               <Tooltip />
-//               <Area type="monotone" dataKey="value" stroke="#2f9e82" fill="#2f9e8233" />
-//             </AreaChart>
-//           </ResponsiveContainer>
-//         </div>
-//       </Card>
-//     </>
-//   );
-// }
-
-
-
-// import { useEffect } from 'react';
-// import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-// import { PageHeader } from '../components/PageHeader';
-// import { useAppDispatch } from '../hooks/useAppDispatch';
-// import { useAppSelector } from '../hooks/useAppSelector';
-// import { loadDashboardData } from '../store/dataSlice';
-
-// const chart = [{period:'Jan',value:40},{period:'Feb',value:52},{period:'Mar',value:48},{period:'Apr',value:61},{period:'May',value:66}];
-// export function Dashboard(){ const dispatch=useAppDispatch(); const data=useAppSelector(s=>s.data); useEffect(()=>{dispatch(loadDashboardData());},[dispatch]); const cards=[['Inventory Items',data.inventory.length],['Suppliers',data.suppliers.length],['Open Orders',data.orders.filter(o=>o.status!=='COMPLETED').length],['Shipments',data.shipments.length]];
-//  return <><PageHeader title="Dashboard" subtitle="Operational command center for inventory and supply chain teams." />
-//  <div className="grid gap-4 md:grid-cols-4">{cards.map(([label,value])=><div key={label} className="rounded-lg border bg-white p-5 shadow-sm"><div className="text-sm text-steel">{label}</div><div className="mt-2 text-3xl font-semibold text-ink">{value}</div></div>)}</div>
-//  <div className="mt-6 rounded-lg border bg-white p-5 shadow-sm"><h2 className="mb-4 font-semibold text-ink">Demand Trend</h2><div className="h-72"><ResponsiveContainer><AreaChart data={chart}><CartesianGrid strokeDasharray="3 3"/><XAxis dataKey="period"/><YAxis/><Tooltip/><Area type="monotone" dataKey="value" stroke="#2f9e82" fill="#2f9e8233"/></AreaChart></ResponsiveContainer></div></div></> }
-
-// import { useEffect } from 'react';
-// import {
-//   Area,
-//   AreaChart,
-//   CartesianGrid,
-//   ResponsiveContainer,
-//   Tooltip,
-//   XAxis,
-//   YAxis,
-// } from 'recharts';
-
-// import { PageHeader } from '../components/PageHeader';
-// import { useAppDispatch } from '../hooks/useAppDispatch';
-// import { useAppSelector } from '../hooks/useAppSelector';
-// import { loadDashboardData } from '../store/dataSlice';
-
-// const chart = [
-//   { period: 'Jan', value: 40 },
-//   { period: 'Feb', value: 52 },
-//   { period: 'Mar', value: 48 },
-//   { period: 'Apr', value: 61 },
-//   { period: 'May', value: 66 },
-// ];
-
-// export function Dashboard() {
-//   const dispatch = useAppDispatch();
-//   const data = useAppSelector((state) => state.data);
-
-//   useEffect(() => {
-//     dispatch(loadDashboardData());
-//   }, [dispatch]);
-
-//   const cards = [
-//     ['Inventory Items', data.inventory.length],
-//     ['Suppliers', data.suppliers.length],
-//     [
-//       'Open Orders',
-//       data.orders.filter((order) => order.status !== 'COMPLETED').length,
-//     ],
-//     ['Shipments', data.shipments.length],
-//   ];
-
-//   return (
-//     <>
-//       <PageHeader
-//         title="Dashboard"
-//         subtitle="Operational command center for inventory and supply chain teams."
-//       />
-
-//       {data.loading && (
-//         <div className="mb-4 rounded-lg border bg-white p-4 text-sm text-steel shadow-sm">
-//           Loading dashboard data...
-//         </div>
-//       )}
-
-//       {data.error && (
-//         <div className="mb-4 rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700 shadow-sm">
-//           {data.error}
-//         </div>
-//       )}
-
-//       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-//         {cards.map(([label, value]) => (
-//           <div
-//             key={String(label)}
-//             className="rounded-lg border bg-white p-5 shadow-sm"
-//           >
-//             <div className="text-sm text-steel">{label}</div>
-//             <div className="mt-2 text-3xl font-semibold text-ink">
-//               {value}
-//             </div>
-//           </div>
-//         ))}
-//       </div>
-
-//       <div className="mt-6 rounded-lg border bg-white p-5 shadow-sm">
-//         <h2 className="mb-4 font-semibold text-ink">Demand Trend</h2>
-
-//         <div className="h-72">
-//           <ResponsiveContainer width="100%" height="100%">
-//             <AreaChart data={chart}>
-//               <CartesianGrid strokeDasharray="3 3" />
-//               <XAxis dataKey="period" />
-//               <YAxis />
-//               <Tooltip />
-
-//               <Area
-//                 type="monotone"
-//                 dataKey="value"
-//                 stroke="#2f9e82"
-//                 fill="#2f9e8233"
-//               />
-//             </AreaChart>
-//           </ResponsiveContainer>
-//         </div>
-//       </div>
-//     </>
-//   );
-// }

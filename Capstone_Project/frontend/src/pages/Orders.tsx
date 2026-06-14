@@ -52,10 +52,10 @@ const initialShipmentForm: ShipmentForm = {
 };
 
 const shipmentStatusLabels: Record<string, string> = {
-  CREATED: 'Shipment Created',
-  IN_TRANSIT: 'In Transit',
-  DELIVERED: 'Delivered',
-  CANCELLED: 'Cancelled',
+  CREATED: 'SHIPMENT CREATED',
+  IN_TRANSIT: 'IN TRANSIT',
+  DELIVERED: 'DELIVERED',
+  CANCELLED: 'CANCELLED',
 };
 
 const shipmentStatusTone: Record<string, string> = {
@@ -252,7 +252,7 @@ export function Orders() {
     const status = shipment?.status || 'NONE';
     const label = shipment
       ? shipmentStatusLabels[shipment.status] || shipment.status
-      : 'No Shipment';
+      : 'NO SHIPMENT';
 
     return (
       <span
