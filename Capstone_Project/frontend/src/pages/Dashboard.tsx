@@ -1,9 +1,69 @@
+import { useEffect, useState } from 'react';
+import { api } from '../api/client';
 import { PageHeader } from '../components/PageHeader';
 import { Card } from '../components/ui';
 import { useAppSelector } from '../hooks/useAppSelector';
 
+type RevenueItem = {
+  sku: string;
+  itemName: string;
+  revenue: number;
+};
+
+type AnalyticsDashboard = {
+  revenue: number;
+  todayRevenue: number;
+  monthlyRevenue: number;
+  topRevenueItems: RevenueItem[];
+};
+
+const initialAnalytics: AnalyticsDashboard = {
+  revenue: 0,
+  todayRevenue: 0,
+  monthlyRevenue: 0,
+  topRevenueItems: [],
+};
+
+const formatCurrency = (value: number) =>
+  new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    maximumFractionDigits: 0,
+  }).format(value);
+
 export function Dashboard() {
   const data = useAppSelector((state) => state.data);
+  const [analytics, setAnalytics] =
+    useState<AnalyticsDashboard>(initialAnalytics);
+  const [analyticsError, setAnalyticsError] = useState('');
+
+  useEffect(() => {
+    let active = true;
+
+    api
+      .get('/analytics/dashboard')
+      .then((response) => {
+        if (!active) return;
+
+        setAnalytics({
+          revenue: Number(response.data?.revenue || 0),
+          todayRevenue: Number(response.data?.todayRevenue || 0),
+          monthlyRevenue: Number(response.data?.monthlyRevenue || 0),
+          topRevenueItems: response.data?.topRevenueItems || [],
+        });
+        setAnalyticsError('');
+      })
+      .catch(() => {
+        if (!active) return;
+
+        setAnalytics(initialAnalytics);
+        setAnalyticsError('Revenue analytics could not be loaded right now.');
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const cards = [
     ['Inventory Items', data.inventory.length],
@@ -13,6 +73,7 @@ export function Dashboard() {
       data.orders.filter((order) => order.status !== 'COMPLETED').length,
     ],
     ['Shipments', data.shipments.length],
+    ['Revenue', formatCurrency(analytics.revenue)],
   ];
 
   const activitySummary = [
@@ -65,7 +126,7 @@ export function Dashboard() {
         subtitle="Operational command center for inventory and supply chain teams."
       />
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
         {cards.map(([label, value]) => (
           <Card key={label} className="p-5">
             <div className="text-sm font-medium text-steel">{label}</div>
@@ -75,6 +136,63 @@ export function Dashboard() {
           </Card>
         ))}
       </div>
+
+      <Card className="mt-6 p-5">
+        <div className="mb-5">
+          <h2 className="text-lg font-semibold text-ink">
+            Revenue Summary
+          </h2>
+          <p className="mt-1 text-sm text-steel">
+            Net sales revenue after returned inventory adjustments.
+          </p>
+        </div>
+
+        {analyticsError ? (
+          <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            {analyticsError}
+          </div>
+        ) : (
+          <div className="grid gap-4 lg:grid-cols-3">
+            <div className="rounded-md border border-slate-200 bg-slate-50 p-4">
+              <div className="text-sm font-medium text-steel">Today</div>
+              <div className="mt-3 text-2xl font-semibold text-ink">
+                {formatCurrency(analytics.todayRevenue)}
+              </div>
+            </div>
+
+            <div className="rounded-md border border-slate-200 bg-slate-50 p-4">
+              <div className="text-sm font-medium text-steel">This Month</div>
+              <div className="mt-3 text-2xl font-semibold text-ink">
+                {formatCurrency(analytics.monthlyRevenue)}
+              </div>
+            </div>
+
+            <div className="rounded-md border border-slate-200 bg-slate-50 p-4">
+              <div className="text-sm font-medium text-steel">Top SKUs</div>
+              <div className="mt-3 space-y-2">
+                {analytics.topRevenueItems.length === 0 ? (
+                  <div className="text-sm text-steel">No sales revenue yet.</div>
+                ) : (
+                  analytics.topRevenueItems.map((item) => (
+                    <div
+                      key={item.sku}
+                      className="flex items-center justify-between gap-3 text-sm"
+                    >
+                      <div>
+                        <div className="font-semibold text-ink">{item.sku}</div>
+                        <div className="text-xs text-steel">{item.itemName}</div>
+                      </div>
+                      <div className="font-semibold text-ink">
+                        {formatCurrency(item.revenue)}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </Card>
 
       <Card className="mt-6 p-5">
         <div className="mb-5">
@@ -285,4 +403,3 @@ export function Dashboard() {
 //     </>
 //   );
 // }
-

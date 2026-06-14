@@ -34,6 +34,67 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title='Smart Inventory Analytics Service', version='1.0.0', lifespan=lifespan)
 
 
+def sales_revenue_metrics():
+    try:
+        with get_inventory_connection() as conn:
+            totals = conn.execute('''
+                SELECT
+                    COALESCE(SUM(
+                        CASE
+                            WHEN status = 'SOLD' THEN quantity * unit_cost
+                            WHEN status = 'RETURNED' THEN -quantity * unit_cost
+                            ELSE 0
+                        END
+                    ), 0) AS revenue,
+                    COALESCE(SUM(
+                        CASE
+                            WHEN created_at::date = CURRENT_DATE AND status = 'SOLD' THEN quantity * unit_cost
+                            WHEN created_at::date = CURRENT_DATE AND status = 'RETURNED' THEN -quantity * unit_cost
+                            ELSE 0
+                        END
+                    ), 0) AS today_revenue,
+                    COALESCE(SUM(
+                        CASE
+                            WHEN date_trunc('month', created_at) = date_trunc('month', CURRENT_DATE) AND status = 'SOLD' THEN quantity * unit_cost
+                            WHEN date_trunc('month', created_at) = date_trunc('month', CURRENT_DATE) AND status = 'RETURNED' THEN -quantity * unit_cost
+                            ELSE 0
+                        END
+                    ), 0) AS monthly_revenue
+                FROM sales_records
+                WHERE status IN ('SOLD', 'RETURNED')
+            ''').fetchone()
+            top_items = conn.execute('''
+                SELECT
+                    sku,
+                    MAX(item_name) AS item_name,
+                    COALESCE(SUM(
+                        CASE
+                            WHEN status = 'SOLD' THEN quantity * unit_cost
+                            WHEN status = 'RETURNED' THEN -quantity * unit_cost
+                            ELSE 0
+                        END
+                    ), 0) AS revenue
+                FROM sales_records
+                WHERE status IN ('SOLD', 'RETURNED')
+                GROUP BY sku
+                ORDER BY revenue DESC
+                LIMIT 5
+            ''').fetchall()
+    except Exception as exc:
+        print(f'Sales revenue aggregation skipped: {exc}')
+        return {'revenue': 0, 'todayRevenue': 0, 'monthlyRevenue': 0, 'topRevenueItems': []}
+
+    return {
+        'revenue': float(totals[0]),
+        'todayRevenue': float(totals[1]),
+        'monthlyRevenue': float(totals[2]),
+        'topRevenueItems': [
+            {'sku': row[0], 'itemName': row[1], 'revenue': float(row[2])}
+            for row in top_items
+        ]
+    }
+
+
 @app.get('/health')
 def health():
     return {'status': 'UP'}
@@ -51,7 +112,8 @@ def dashboard_metrics():
         'openPurchaseOrders': 8,
         'deliveredShipments': event_counts.get('shipment.delivered', 0),
         'recordedDemand': demand,
-        'serviceHealth': 'UP'
+        'serviceHealth': 'UP',
+        **sales_revenue_metrics()
     }
 
 
