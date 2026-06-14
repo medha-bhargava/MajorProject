@@ -1,4 +1,5 @@
 import { type FormEvent, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
 import { PageHeader } from '../components/PageHeader';
 import { StatusBadge } from '../components/StatusBadge';
@@ -13,7 +14,7 @@ import { useAppDispatch } from '../hooks/useAppDispatch';
 import { useAppSelector } from '../hooks/useAppSelector';
 import { loadDashboardData } from '../store/dataSlice';
 import { canAccess, permissionMessage } from '../utils/permissions';
-import type { InventoryItem, PurchaseOrder } from '../types';
+import type { InventoryItem, PurchaseOrder, Shipment } from '../types';
 
 type OrderForm = {
   sku: string;
@@ -51,11 +52,28 @@ const initialShipmentForm: ShipmentForm = {
   quantity: '',
 };
 
+const shipmentStatusLabels: Record<string, string> = {
+  CREATED: 'Shipment Created',
+  IN_TRANSIT: 'In Transit',
+  DELIVERED: 'Delivered',
+  CANCELLED: 'Cancelled',
+};
+
+const shipmentStatusTone: Record<string, string> = {
+  NONE: 'bg-slate-100 text-steel',
+  CREATED: 'bg-sky-100 text-sky-800',
+  IN_TRANSIT: 'bg-amber-100 text-amber-800',
+  DELIVERED: 'bg-emerald-100 text-emerald-800',
+  CANCELLED: 'bg-rose-100 text-rose-800',
+};
+
 export function Orders() {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const orders = useAppSelector((state) => state.data.orders);
   const inventory = useAppSelector((state) => state.data.inventory);
   const suppliers = useAppSelector((state) => state.data.suppliers);
+  const shipments = useAppSelector((state) => state.data.shipments);
   const loading = useAppSelector((state) => state.data.loading);
   const user = useAppSelector((state) => state.auth.user);
   const role = user?.role;
@@ -77,6 +95,20 @@ export function Orders() {
   const supplierNameById = new Map(
     suppliers.map((supplier) => [supplier.id, supplier.name])
   );
+  const shipmentByOrderId = shipments.reduce((map, shipment) => {
+    if (!shipment.orderId) return map;
+
+    const currentShipment = map.get(shipment.orderId);
+    if (
+      !currentShipment ||
+      (currentShipment.status === 'CANCELLED' &&
+        shipment.status !== 'CANCELLED')
+    ) {
+      map.set(shipment.orderId, shipment);
+    }
+
+    return map;
+  }, new Map<string, Shipment>());
 
   const updateForm = (field: keyof OrderForm, value: string) => {
     setForm((current) => ({ ...current, [field]: value }));
@@ -217,8 +249,26 @@ export function Orders() {
     }
   };
 
+  const renderShipmentStatus = (shipment?: Shipment) => {
+    const status = shipment?.status || 'NONE';
+    const label = shipment
+      ? shipmentStatusLabels[shipment.status] || shipment.status
+      : 'No Shipment';
+
+    return (
+      <span
+        className={`inline-flex rounded-md px-2.5 py-1 text-xs font-semibold ${
+          shipmentStatusTone[status] || shipmentStatusTone.NONE
+        }`}
+      >
+        {label}
+      </span>
+    );
+  };
+
   const renderOrderActions = (order: (typeof orders)[number]) => {
     if (!canManageOrders) return null;
+    const shipment = shipmentByOrderId.get(order.id);
 
     if (order.status === 'PENDING') {
       return (
@@ -266,6 +316,17 @@ export function Orders() {
     }
 
     if (order.status === 'COMPLETED') {
+      if (shipment && shipment.status !== 'CANCELLED') {
+        return (
+          <SecondaryButton
+            className="px-3 py-1.5"
+            onClick={() => navigate('/shipments')}
+          >
+            View Shipment
+          </SecondaryButton>
+        );
+      }
+
       return (
         <SecondaryButton
           className="px-3 py-1.5"
@@ -374,31 +435,37 @@ export function Orders() {
                 <th>Qty</th>
                 <th>Status</th>
                 <th>Procurement cost</th>
+                <th>Shipment Status</th>
                 {canManageOrders && <th>Actions</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {orders.map((order) => (
-                <tr className="transition hover:bg-gray-50" key={order.id}>
-                  <td className="p-4 font-semibold text-ink">
-                    {order.itemName}
-                  </td>
-                  <td className="text-steel">{order.sku}</td>
-                  <td className="text-steel">
-                    {supplierNameById.get(order.supplierId) || 'Unknown supplier'}
-                  </td>
-                  <td className="font-semibold text-ink">{order.quantity}</td>
-                  <td>
-                    <StatusBadge value={order.status} />
-                  </td>
-                  <td className="text-steel">{'$'}{order.unitCost}</td>
-                  {canManageOrders && (
-                    <td className="py-3 pr-4">
-                      {renderOrderActions(order)}
+              {orders.map((order) => {
+                const shipment = shipmentByOrderId.get(order.id);
+
+                return (
+                  <tr className="transition hover:bg-gray-50" key={order.id}>
+                    <td className="p-4 font-semibold text-ink">
+                      {order.itemName}
                     </td>
-                  )}
-                </tr>
-              ))}
+                    <td className="text-steel">{order.sku}</td>
+                    <td className="text-steel">
+                      {supplierNameById.get(order.supplierId) || 'Unknown supplier'}
+                    </td>
+                    <td className="font-semibold text-ink">{order.quantity}</td>
+                    <td>
+                      <StatusBadge value={order.status} />
+                    </td>
+                    <td className="text-steel">{'$'}{order.unitCost}</td>
+                    <td>{renderShipmentStatus(shipment)}</td>
+                    {canManageOrders && (
+                      <td className="py-3 pr-4">
+                        {renderOrderActions(order)}
+                      </td>
+                    )}
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
