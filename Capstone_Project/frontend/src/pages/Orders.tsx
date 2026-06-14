@@ -1,5 +1,4 @@
 import { type FormEvent, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
 import { PageHeader } from '../components/PageHeader';
 import { StatusBadge } from '../components/StatusBadge';
@@ -69,7 +68,6 @@ const shipmentStatusTone: Record<string, string> = {
 
 export function Orders() {
   const dispatch = useAppDispatch();
-  const navigate = useNavigate();
   const orders = useAppSelector((state) => state.data.orders);
   const inventory = useAppSelector((state) => state.data.inventory);
   const suppliers = useAppSelector((state) => state.data.suppliers);
@@ -88,6 +86,7 @@ export function Orders() {
   const [shipmentForm, setShipmentForm] = useState(initialShipmentForm);
   const [shipmentSaving, setShipmentSaving] = useState(false);
   const [shipmentError, setShipmentError] = useState<string | null>(null);
+  const [viewShipment, setViewShipment] = useState<Shipment | null>(null);
 
   const canView = canAccess(role, 'orders');
   const canManageOrders = role === 'ADMIN' || role === 'PROCUREMENT_MANAGER';
@@ -266,6 +265,27 @@ export function Orders() {
     );
   };
 
+  const formatDetailDate = (value?: string) => {
+    if (!value) return '—';
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? value : date.toLocaleString();
+  };
+
+  const shipmentDetailRows = viewShipment
+    ? [
+        ['Tracking Number', viewShipment.trackingNumber],
+        ['Carrier', viewShipment.carrier],
+        ['SKU', viewShipment.sku],
+        ['Quantity', viewShipment.quantity],
+        ['Origin Warehouse', viewShipment.originWarehouse],
+        ['Destination Warehouse', viewShipment.destinationWarehouse],
+        ['Shipment Status', viewShipment.status],
+        ['Order ID', viewShipment.orderId],
+        ['Shipped At', formatDetailDate(viewShipment.shippedAt)],
+        ['Delivered At', formatDetailDate(viewShipment.deliveredAt)],
+      ]
+    : [];
+
   const renderOrderActions = (order: (typeof orders)[number]) => {
     if (!canManageOrders) return null;
     const shipment = shipmentByOrderId.get(order.id);
@@ -320,7 +340,7 @@ export function Orders() {
         return (
           <SecondaryButton
             className="px-3 py-1.5"
-            onClick={() => navigate('/shipments')}
+            onClick={() => setViewShipment(shipment)}
           >
             View Shipment
           </SecondaryButton>
@@ -687,6 +707,49 @@ export function Orders() {
               />
             </div>
           </form>
+        </ActionModal>
+      )}
+
+      {viewShipment && (
+        <ActionModal
+          title="Shipment details"
+          description="Linked shipment information for this procurement order."
+          onClose={() => setViewShipment(null)}
+          footer={
+            <SecondaryButton
+              type="button"
+              onClick={() => setViewShipment(null)}
+            >
+              Close
+            </SecondaryButton>
+          }
+        >
+          <div className="space-y-4">
+            <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2">
+              <div className="flex items-center justify-between gap-3">
+                <div className="text-sm font-semibold text-ink">
+                  {viewShipment.trackingNumber || '—'}
+                </div>
+                <StatusBadge value={viewShipment.status} />
+              </div>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              {shipmentDetailRows.map(([label, value]) => (
+                <div
+                  key={label}
+                  className="rounded-md border border-slate-200 bg-white px-3 py-2"
+                >
+                  <div className="text-xs font-semibold uppercase tracking-wide text-steel">
+                    {label}
+                  </div>
+                  <div className="mt-1 break-words text-sm font-medium text-ink">
+                    {value || '—'}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </ActionModal>
       )}
     </>
