@@ -60,7 +60,7 @@ const shipmentStatusLabels: Record<string, string> = {
 
 const shipmentStatusTone: Record<string, string> = {
   NONE: 'bg-slate-100 text-steel',
-  CREATED: 'bg-sky-100 text-sky-800',
+  CREATED: 'bg-gray-100 text-gray-700',
   IN_TRANSIT: 'bg-amber-100 text-amber-800',
   DELIVERED: 'bg-emerald-100 text-emerald-800',
   CANCELLED: 'bg-rose-100 text-rose-800',
