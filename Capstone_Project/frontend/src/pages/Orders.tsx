@@ -1,4 +1,4 @@
-import { type FormEvent, useState } from 'react';
+import { type FormEvent, useMemo, useState } from 'react';
 import { api } from '../api/client';
 import { PageHeader } from '../components/PageHeader';
 import { StatusBadge } from '../components/StatusBadge';
@@ -91,6 +91,14 @@ export function Orders() {
   const canView = canAccess(role, 'orders');
   const canManageOrders = role === 'ADMIN' || role === 'PROCUREMENT_MANAGER';
   const lowStockItems = inventory.filter((item) => item.lowStock);
+  const sortedOrders = useMemo(
+    () =>
+      [...orders].sort(
+        (firstOrder, secondOrder) =>
+          Date.parse(secondOrder.createdAt) - Date.parse(firstOrder.createdAt)
+      ),
+    [orders]
+  );
   const supplierNameById = new Map(
     suppliers.map((supplier) => [supplier.id, supplier.name])
   );
@@ -460,7 +468,7 @@ export function Orders() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {orders.map((order) => {
+              {sortedOrders.map((order) => {
                 const shipment = shipmentByOrderId.get(order.id);
 
                 return (

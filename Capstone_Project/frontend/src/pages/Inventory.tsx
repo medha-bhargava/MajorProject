@@ -1,4 +1,4 @@
-import { type FormEvent, useState } from 'react';
+import { type FormEvent, useMemo, useState } from 'react';
 import { api } from '../api/client';
 import { PageHeader } from '../components/PageHeader';
 import {
@@ -61,6 +61,16 @@ export function Inventory() {
   const [adjustError, setAdjustError] = useState<string | null>(null);
 
   const canView = canAccess(role, 'inventory');
+  const sortedItems = useMemo(
+    () =>
+      [...items].sort((firstItem, secondItem) =>
+        firstItem.sku.localeCompare(secondItem.sku, undefined, {
+          numeric: true,
+          sensitivity: 'base',
+        })
+      ),
+    [items]
+  );
 
   const updateForm = (field: keyof InventoryForm, value: string) => {
     setForm((current) => ({ ...current, [field]: value }));
@@ -206,7 +216,7 @@ export function Inventory() {
             </thead>
 
             <tbody className="divide-y divide-gray-100">
-              {items.map((item) => (
+              {sortedItems.map((item) => (
                 // <tr className="transition hover:bg-gray-50" key={item.id}>
                 <tr
                   className={`transition hover:bg-gray-50 ${item.lowStock ? 'bg-rose-50/60' : ''
