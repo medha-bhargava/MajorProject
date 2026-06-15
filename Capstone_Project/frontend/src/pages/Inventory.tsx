@@ -202,8 +202,8 @@ export function Inventory() {
           onAction={() => setShowModal(true)}
         />
       ) : (
-        <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-          <table className="w-full text-left text-sm">
+        <div className="touch-pan-x overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-sm">
+          <table className="w-full min-w-[760px] text-left text-sm">
             <thead className="bg-gray-50 text-xs uppercase tracking-wide text-steel">
               <tr>
                 <th className="p-4">SKU</th>
