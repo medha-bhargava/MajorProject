@@ -107,7 +107,7 @@ export function Dashboard() {
     ],
     ['Shipments', data.shipments.length],
     ['Revenue', formatCurrency(analytics.revenue)],
-    ['Expense Summary', formatCurrency(expenseSummary)],
+    ['Expense', formatCurrency(expenseSummary)],
   ];
 
   const activitySummary = [

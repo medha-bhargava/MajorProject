@@ -4,5 +4,6 @@ public enum Role {
     ADMIN,
     WAREHOUSE_MANAGER,
     PROCUREMENT_MANAGER,
-    SUPPLIER
+    SUPPLIER,
+    SUPPLIER_MANAGER
 }

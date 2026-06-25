@@ -74,7 +74,7 @@ export function Register() {
         <option value="ADMIN">ADMIN</option>
         <option value="WAREHOUSE_MANAGER">WAREHOUSE_MANAGER</option>
         <option value="PROCUREMENT_MANAGER">PROCUREMENT_MANAGER</option>
-        <option value="SUPPLIER">SUPPLIER</option>
+        <option value="SUPPLIER_MANAGER">SUPPLIER_MANAGER</option>
       </select>
     </label>
     <button className="mt-6 w-full rounded-md bg-mint px-4 py-2 font-semibold text-white">Register</button><p className="mt-4 text-center text-sm"><Link className="text-mint" to="/login">Back to login</Link></p>

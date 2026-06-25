@@ -1,4 +1,4 @@
-export type Role = 'ADMIN' | 'WAREHOUSE_MANAGER' | 'PROCUREMENT_MANAGER' | 'SUPPLIER';
+export type Role = 'ADMIN' | 'WAREHOUSE_MANAGER' | 'PROCUREMENT_MANAGER' | 'SUPPLIER' | 'SUPPLIER_MANAGER';
 export interface AuthUser { userId: string; fullName: string; email: string; role: Role; accessToken: string; refreshToken: string; }
 export interface InventoryItem { id: string; sku: string; name: string; category: string; warehouseCode: string; quantity: number; lowStockThreshold: number; unitCost: number; valuation: number; lowStock: boolean; updatedAt: string; }
 export interface Supplier { id: string; name: string; email: string; phone: string; contactPerson: string; productCategory: string; averageLeadTimeDays: number; rating: number; }

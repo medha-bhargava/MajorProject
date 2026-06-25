@@ -45,6 +45,7 @@ export function Login() {
           Email
           <input
             type="email"
+            placeholder="Enter email"
             className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
@@ -56,6 +57,7 @@ export function Login() {
           Password
           <input
             type="password"
+            placeholder="Enter password"
             className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
